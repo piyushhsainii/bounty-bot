@@ -1,5 +1,5 @@
 import { Probot } from "probot";
-import { extractAmount, isBountyComment } from "./utils.js";
+import { extractAmount, isBountyComment, sendBountyMessageToDiscord } from "./utils.js";
 import dotenv from 'dotenv'
 
 export default (app: Probot) => {
@@ -26,19 +26,13 @@ export default (app: Probot) => {
       // verifies if the comment is created 
       // const id = await getOwnerId({ id: context.payload.repository.id });
       const admin = process.env.ADMIN_USERNAME
-      console.log("point break 2")
-      console.log(isRepoOwner,'1')
-      console.log(commenter,'2')
-      console.log(admin,'3')
       if(admin !== commenter) return;
       if(
         !isRepoOwner &&
         !admin?.includes(commenter)
       ) return ;
-      console.log("point break 2.5")
 
       if (!isBountyComment(commentBody)) return;
-      console.log("point break 3")
 
         // checking if the body is appropiaate and extracting the bounty
         const amount = extractAmount(commentBody)?.replace("$","")
@@ -55,8 +49,14 @@ export default (app: Probot) => {
         const prComment = context.issue({
           body: `Congratulations!!! @${context.payload.issue.user.login} for winning $${amount}. Visit ${process.env.CONTRIBUTOR_SERVER_URL} to claim bounty.`
         })
-  
-        return  await context.octokit.issues.createComment(prComment)
+        await context.octokit.issues.createComment(prComment)
+        await sendBountyMessageToDiscord({
+          title: 'Bounty Dispatch',
+          avatarUrl: context.payload.sender.avatar_url,
+          description: `Congratulations!!! @${context.payload.issue.user.login} for winning ${amount}`,
+          prLink: context.payload.issue.url,
+        });
+        return
     })
 
 

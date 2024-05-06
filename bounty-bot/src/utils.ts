@@ -1,5 +1,17 @@
 import axios from "axios";
+import { EmbedBuilder, WebhookClient } from 'discord.js'
 
+type sendBountyTypes = {
+    title: string;
+    description: string;
+    avatarUrl: string;
+    prLink: string;
+  };
+const discordWebHookUrl =process.env.DISCORD_WEBHOOK_URL!
+console.log(discordWebHookUrl)
+export const webhookClient = new WebhookClient({
+url: discordWebHookUrl,
+});
 
 export const extractAmount = (comment: string) => {
     const bountyExtractor = /\/bounty\s+(\$?\d+|\d+\$)/;
@@ -24,8 +36,38 @@ export const extractAmount = (comment: string) => {
       });
 
       return response.data.addedById;
-      
+
     } catch (error: any) {
       console.error(error);
     }
   };
+
+  export const sendBountyMessageToDiscord = async ({
+    title,
+    description,
+    avatarUrl,
+    prLink,
+  }: sendBountyTypes) => {
+    const embed = new EmbedBuilder()
+      .setTitle(title)
+      .setDescription(description)
+      .setThumbnail(avatarUrl)
+      .addFields({
+        name: 'PR',
+        value: prLink,
+      });
+  
+    await webhookClient.send({
+      username: 'Github',
+      avatarURL:
+        'https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png',
+      embeds: [embed],
+    });
+  };
+
+//   export const LogInGoogleDoc = async()=>{
+//     const CLIENT_ID = process.env.CLIENT_ID
+//     const API_KEY = process.env.API_KEY
+
+    
+//   }
